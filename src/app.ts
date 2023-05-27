@@ -1,17 +1,25 @@
+import 'reflect-metadata';
+
 import cors from '@fastify/cors';
 
 import fastify from 'fastify';
+import socketioServer from 'fastify-socket.io';
 import { ZodError } from 'zod';
 
 import { env } from './env';
 import { routes } from './routes/index.routes';
+import { Board } from 'johnny-five';
 
 export const app = fastify();
+export const board = new Board({ port: 'COM5' });
 
 app.register(cors, {
 	origin: '*',
 	methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
 });
+
+app.register(socketioServer);
+
 app.register(routes, { prefix: '/api' });
 
 app.setErrorHandler((error, _, reply) => {

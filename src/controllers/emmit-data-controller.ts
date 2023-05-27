@@ -1,10 +1,9 @@
 import { make } from '@/useCases/factories/make';
-import { MoveServoUseCase } from '@/useCases/move-servo-use-case';
+import { makeEmmitData } from '@/useCases/factories/make-emmit-data';
 import { FastifyReply, FastifyRequest } from 'fastify';
-import { container } from 'tsyringe';
 import { z } from 'zod';
 
-export async function moveServoController(request: FastifyRequest, reply: FastifyReply): Promise<FastifyReply> {
+export async function emmitDataController(request: FastifyRequest, reply: FastifyReply): Promise<FastifyReply> {
 	const bodySchema = z.object({
 		servoA: z.array(z.string()),
 		servoB: z.array(z.string()),
@@ -13,11 +12,11 @@ export async function moveServoController(request: FastifyRequest, reply: Fastif
 
 	const { servoA, servoB, servoC } = bodySchema.parse(request.body);
 	try {
-		const moveServoUseCase = new MoveServoUseCase();
+		const emmitDataUseCase = makeEmmitData();
 
-		await moveServoUseCase.execute({ servoA, servoB, servoC });
+		const ports = await emmitDataUseCase.execute({ servoA, servoB, servoC });
 
-		return reply.send({ message: 'ok' });
+		return reply.send({ ports });
 	} catch (error) {
 		console.log('error: ', error);
 		return reply.status(500).send();

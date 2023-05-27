@@ -1,14 +1,14 @@
-import { SerialPort } from 'serialport';
+import { Board, Servo } from 'johnny-five';
+
+interface RequestServoUseCase {
+	position: number;
+}
 
 export class MoveServoUseCase {
-	async execute() {
-		const listPorts = await SerialPort.list();
+	async execute(servo: Servo, data: RequestServoUseCase) {
+		const { position } = data;
+		let posAux: number;
 
-		const portBiding = await SerialPort.binding.list();
-		console.log(portBiding);
-
-		// const port = new SerialPort({ path: '/', baudRate: 9600 });
-
-		return listPorts;
+		servo.to(position, 100);
 	}
 }

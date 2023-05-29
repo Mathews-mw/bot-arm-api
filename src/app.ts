@@ -3,15 +3,42 @@ import 'reflect-metadata';
 import cors from '@fastify/cors';
 
 import fastify from 'fastify';
-import socketioServer from 'fastify-socket.io';
 import { ZodError } from 'zod';
+import { Board } from 'johnny-five';
+import socketioServer from 'fastify-socket.io';
 
 import { env } from './env';
+import { SerialPort } from 'serialport';
 import { routes } from './routes/index.routes';
-import { Board } from 'johnny-five';
+import { PortInfo } from '@serialport/bindings-cpp';
+
+let serialPort: SerialPort;
+let board: Board;
 
 export const app = fastify();
-export const board = new Board({ port: 'COM5' });
+
+new Promise<PortInfo[]>((resolve, reject) => {
+	const ports = SerialPort.list();
+	resolve(ports);
+})
+	.then((data) => {
+		const availableSerialPorts = data;
+
+		const searchPort = availableSerialPorts.find((port) => port.productId === '7523');
+
+		if (searchPort) {
+			serialPort = new SerialPort({
+				baudRate: 57600,
+				highWaterMark: 256,
+				path: searchPort.path,
+			});
+
+			board = new Board({ port: serialPort });
+		}
+	})
+	.catch((error) => {
+		console.log(error);
+	});
 
 app.register(cors, {
 	origin: '*',
@@ -33,3 +60,5 @@ app.setErrorHandler((error, _, reply) => {
 
 	return reply.status(500).send({ message: 'Internal server error.' });
 });
+
+export { board };

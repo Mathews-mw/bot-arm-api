@@ -1,6 +1,6 @@
 import { FastifyInstance } from 'fastify';
 
-import { board } from '@/app';
+import { board, serialPort } from '@/app';
 import { makeButtonsInstances, buttonPrimaryInstance, buttonSecondaryInstance } from '@/shared/container/buttons-instances';
 import { joystickPrimaryInstance, joystickSecondaryInstance, makeJoysticksInstances } from '@/shared/container/joysticks-instances';
 import { makeServosInstances, servoBaseInstance, servoClawInstance, servoLeftInstance, servoRightInstance } from '@/shared/container/servos-instances';
@@ -16,7 +16,8 @@ export async function startupController(app: FastifyInstance) {
 		}
 
 		app.io.on('connection', (socket) => {
-			socket.on('servos-initialize', async (data: IConnectRequest) => {
+			socket.on('startup', async (data: IConnectRequest) => {
+				console.log(data);
 				if (board.isReady) {
 					if (data.connect === 1) {
 						try {
@@ -46,11 +47,29 @@ export async function startupController(app: FastifyInstance) {
 								});
 							}
 
+							console.log(serialPort.isOpen);
 							socket.emit('message', 'O braço robótico está pronto para ser operado.');
+							socket.emit('startup-sucess', { connected: true });
 						} catch (error) {
 							console.log(error);
 							app.io.emit('error', 'Erro ao inicializar.');
+							socket.emit('startup-sucess', { connected: false });
 						}
+					}
+
+					if (data.connect === 0) {
+						socket.emit('startup-sucess', { connected: false });
+
+						await serialPort.pause();
+						await serialPort.close();
+
+						console.log(await board.isReady);
+
+						board.on('exit', () => {
+							console.log('desligando a placa');
+						});
+
+						console.log(await serialPort.isOpen);
 					}
 				}
 			});

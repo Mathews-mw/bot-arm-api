@@ -45,7 +45,11 @@ app.register(cors, {
 	methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
 });
 
-app.register(socketioServer);
+app.register(socketioServer, {
+	cors: {
+		origin: 'http://localhost:3000',
+	},
+});
 
 app.register(routes, { prefix: '/api' });
 
@@ -61,4 +65,4 @@ app.setErrorHandler((error, _, reply) => {
 	return reply.status(500).send({ message: 'Internal server error.' });
 });
 
-export { board };
+export { board, serialPort };

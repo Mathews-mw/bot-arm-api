@@ -8,7 +8,7 @@ import { joystickPrimaryInstance, joystickSecondaryInstance } from '@/shared/con
 import { servoBaseInstance, servoClawInstance, servoLeftInstance, servoRightInstance } from '@/shared/container/servos-instances';
 
 interface IJoystickControllRequest {
-	start: number;
+	connect: number;
 }
 
 export async function joystickController(app: FastifyInstance) {
@@ -30,7 +30,9 @@ export async function joystickController(app: FastifyInstance) {
 						return;
 					}
 
-					if (data.start === 1) {
+					if (data.connect === 1) {
+						socket.emit('connect-joysticks', { connected: true });
+
 						const joystickControlServoBase = new JoystickControlUseCase(servoBaseInstance);
 						const joystickControlServoCalw = new JoystickControlUseCase(servoClawInstance);
 						const joystickControlServoRight = new JoystickControlUseCase(servoRightInstance);
@@ -66,6 +68,8 @@ export async function joystickController(app: FastifyInstance) {
 				}
 
 				socket.on('disconnect', async () => {
+					socket.emit('connect-joysticks', { connected: false });
+
 					if (board.isReady) {
 						servoBaseInstance.servo.stop();
 						servoClawInstance.servo.stop();

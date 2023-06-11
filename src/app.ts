@@ -12,12 +12,10 @@ import { SerialPort } from 'serialport';
 import { routes } from './routes/index.routes';
 import { PortInfo } from '@serialport/bindings-cpp';
 
-let serialPort: SerialPort;
 let board: Board;
+let serialPort: SerialPort;
 
-export const app = fastify();
-
-new Promise<PortInfo[]>((resolve, reject) => {
+new Promise<PortInfo[]>((resolve, _reject) => {
 	const ports = SerialPort.list();
 	resolve(ports);
 })
@@ -26,19 +24,24 @@ new Promise<PortInfo[]>((resolve, reject) => {
 
 		const searchPort = availableSerialPorts.find((port) => port.productId === '7523');
 
-		if (searchPort) {
-			serialPort = new SerialPort({
-				baudRate: 57600,
-				highWaterMark: 256,
-				path: searchPort.path,
-			});
-
-			board = new Board({ port: serialPort });
+		if (!searchPort) {
+			console.log('Nenhuma porta conectada');
+			return;
 		}
+
+		serialPort = new SerialPort({
+			baudRate: 57600,
+			highWaterMark: 256,
+			path: searchPort.path,
+		});
+
+		board = new Board({ port: serialPort });
 	})
 	.catch((error) => {
 		console.log(error);
 	});
+
+export const app = fastify();
 
 app.register(cors, {
 	origin: '*',
